@@ -1,6 +1,7 @@
 """SQLAlchemy models."""
 
 from flask_sqlalchemy import SQLAlchemy
+from geoalchemy2 import Geometry
 
 
 db = SQLAlchemy()
@@ -21,6 +22,5 @@ class Base(db.Model):
 class ATM(Base):
     """ATM model to store the details of the ATM and the active status."""
 
-    latitude = db.Column(db.Float)
-    longitude = db.Column(db.Float)
-    status = db.Column(db.Boolean)
+    location = db.Column(Geometry('POINT'))
+    status = db.Column(db.Boolean, default=True)
