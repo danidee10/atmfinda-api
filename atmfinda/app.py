@@ -11,14 +11,17 @@ from flask import Flask, jsonify
 from sqlalchemy import cast, func
 from flask_migrate import Migrate
 
-from .models import db, ATM
 from .admin import admin
-from .config.config import Local as config
+from .models import db, ATM
+from .utils import (
+    fetch_atms_from_google, transform_google_results, create_atms,
+    deserialize_atms
+)
 
 
 app = Flask(__name__)
 app.config.from_object(
-    environ.get('FLASK_CONFIG', 'atmfinda.config.config.Local')
+    environ.get('FLASK_CONFIG', 'atmfinda.config.local')
 )
 db.init_app(app)
 admin.init_app(app)
@@ -27,12 +30,16 @@ migrate = Migrate(app, db)
 
 
 # Flask cli scripts
-@app.cli.command()
 def initdb():
     """Initialize the db."""
     click.echo('initializing')
     db.create_all()
     click.echo('done.')
+
+
+@app.cli.command('initdb')
+def initdb_command():
+    initdb()
 # End cli scripts
 
 
@@ -48,15 +55,14 @@ def fetch_atms_by_coords(coords):
     ).all()
 
     if atms:
-        pass
-        # wkb.loads(bytes(atms[0].location.data))
+        atms = deserialize_atms(atms)
     else:
         pass
         # Fetch ATM's from google maps and add them to our database
+        atms = fetch_atms_from_google(latitude, longitude)
+        atms = transform_google_results(atms)
+
+        # Should be done in the background, so we respond as fast as possible
+        create_atms(atms)
     
-        url = 'https://maps.googleapis.com/maps/api/place/nearbysearch/json?location={},{}&radius=5000&type=atm&key={}'.format(latitude, longitude, config.GOOGLE_MAPS_KEY)
-        db.session.add(atm)
-        db.session.commit()
-        atm = ATM(location='POINT({} {})')
-    
-    return 'hello world'
+    return jsonify(atms)

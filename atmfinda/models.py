@@ -14,7 +14,7 @@ class Base(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     date_created = db.Column(db.DateTime, default=db.func.current_timestamp())
     date_modified = db.Column(
-        db.DateTime, default=db.func.current_timestamp(), 
+        db.DateTime, default=db.func.current_timestamp(),
         onupdate=db.func.current_timestamp()
     )
 
@@ -22,5 +22,9 @@ class Base(db.Model):
 class ATM(Base):
     """ATM model to store the details of the ATM and the active status."""
 
-    location = db.Column(Geometry('POINT'))
+    name = db.Column(db.String, nullable=False)
+    address = db.Column(db.String)
+    photo_reference = db.Column(db.String, default='')
+    photo = db.Column(db.String, default='')
+    location = db.Column(Geometry('POINT'), nullable=False)
     status = db.Column(db.Boolean, default=True)
