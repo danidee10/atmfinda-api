@@ -1,4 +1,4 @@
-### atmfinda
+# atmfinda
 
 [![Build Status](https://travis-ci.org/danidee10/atmfinda-api.svg?branch=master)](https://travis-ci.org/danidee10/atmfinda-api)
 
