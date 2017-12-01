@@ -48,7 +48,7 @@ def fetch_atms_by_coords(coords):
     """Fetch ATM's by coordinates from Google maps."""
     latitude, longitude = coords.split(',')
 
-    point = 'POINT({} {})'.format(latitude, longitude)
+    point = 'POINT({} {})'.format(longitude, latitude)
 
     atms = db.session.query(ATM).filter(
         func.ST_DWithin(ATM.location, point, 5000)
@@ -57,7 +57,6 @@ def fetch_atms_by_coords(coords):
     if atms:
         atms = deserialize_atms(atms)
     else:
-        pass
         # Fetch ATM's from google maps and add them to our database
         atms = fetch_atms_from_google(latitude, longitude)
         atms = transform_google_results(atms)

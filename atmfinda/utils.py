@@ -27,7 +27,7 @@ def transform_google_results(google_results):
                 'place_id': atm['place_id'],
                 'location': {
                     'latitude': atm['geometry']['location']['lat'],
-                    'longitude': atm['geometry']['location']['lat']
+                    'longitude': atm['geometry']['location']['lng']
                 },
                 'status': True
             }
@@ -47,9 +47,16 @@ def create_atms(atms):
         point = 'POINT({} {})'.format(
             location['longitude'], location['latitude']
         )
-        del atm['location']
+        
+        # move location temporarily
+        loc = atm['location']
+        del atm['location'] 
 
         atm_obj = ATM(**atm, location=point)
+
+        # Restore location back
+        atm['location'] = loc
+
         atm_objs.append(atm_obj)
 
     db.session.add_all(atm_objs)
@@ -76,7 +83,7 @@ def deserialize_atms(atms):
         location = wkb.loads(bytes(atm.location.data))
 
         data = {
-            'name': atm.name, 'address': atm.address,
+            'id': atm.id, 'name': atm.name, 'address': atm.address,
             'photo': atm.photo, 'photo_reference': atm.photo_reference,
             'place_id': atm.place_id,
             'location': {

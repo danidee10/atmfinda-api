@@ -1,7 +1,7 @@
 """SQLAlchemy models."""
 
 from flask_sqlalchemy import SQLAlchemy
-from geoalchemy2 import Geometry
+from geoalchemy2 import Geography
 
 
 db = SQLAlchemy()
@@ -27,5 +27,5 @@ class ATM(Base):
     address = db.Column(db.String)
     photo_reference = db.Column(db.String, default='')
     photo = db.Column(db.String, default='')
-    location = db.Column(Geometry('POINT'), nullable=False)
+    location = db.Column(Geography('POINT'), nullable=False)
     status = db.Column(db.Boolean, default=True)
