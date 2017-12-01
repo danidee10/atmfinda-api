@@ -2,6 +2,8 @@
 
 
 import unittest
+import importlib
+from os import environ
 
 from sqlalchemy import create_engine
 from sqlalchemy_utils import database_exists, create_database, drop_database
@@ -11,6 +13,9 @@ from atmfinda.models import db, ATM
 from atmfinda.utils import (
     transform_google_results, create_atms, deserialize_atms
 )
+
+CONFIG = environ.get('FLASK_CONFIG', 'atmfinda.config.local_test')
+CONFIG = importlib.import_module(CONFIG)
 
 results = {
    "html_attributions": [],
@@ -134,23 +139,25 @@ results = {
 class ATMTestCase(unittest.TestCase):
     """Tests for the ATM model and API."""
 
-    @classmethod
-    def setUpClass(cls):
-        """Setup that's run once for this Test Case"""
-        print('Creating Database...')
+    @staticmethod
+    def create_drop_database():
+        """Creates/ drop (depending on the CONFIG) the test database."""
+        engine = create_engine(CONFIG.SQLALCHEMY_DATABASE_URI)
 
-        cls.database_uri = 'postgresql://postgres@localhost/atmfinda-test'
-        engine = create_engine(cls.database_uri)
-
-        if database_exists(engine.url):
+        if database_exists(engine.url) and CONFIG.DROP_EXISTING_DATABASE:
             print('Dropping existing Database...')
             drop_database(engine.url)
             print('Dropped existing Database.')
 
+        print('Creating Database...')
         create_database(engine.url)
         print('Finished creating Database.')
 
-        # Enable postgis extension
+        return engine
+
+    @staticmethod
+    def enable_postgis(engine):
+        """Enable the postgis extensions."""
         print('Enabling postgis extension(s)...')
         conn = engine.connect()
         conn.execute(
@@ -161,7 +168,14 @@ class ATMTestCase(unittest.TestCase):
         conn.close()
         print('Finished enabling postgis extensions, Database is ready.')
 
-        app.config['SQLALCHEMY_DATABASE_URI'] = cls.database_uri
+    @classmethod
+    def setUpClass(cls):
+        """Setup that's run once for this Test Case"""
+        engine = cls.create_drop_database()
+        
+        cls.enable_postgis(engine)
+
+        app.config['SQLALCHEMY_DATABASE_URI'] = CONFIG.SQLALCHEMY_DATABASE_URI
         app.testing = True
 
         with app.app_context():
@@ -231,7 +245,7 @@ class ATMTestCase(unittest.TestCase):
     def tearDownClass(cls):
         """Delete the database at the end of the test."""
         with app.app_context():
-            drop_database(cls.database_uri)
+            drop_database(CONFIG.SQLALCHEMY_DATABASE_URI)
 
 
 if __name__ == '__main__':
