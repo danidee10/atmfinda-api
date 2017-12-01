@@ -3,8 +3,11 @@ language: python
 env:
   - FLASK_CONFIG=atmfinda.config.travis
 
-services:
-  - postgresql
+addons:
+  postgresql: 9.6
+  apt:
+    packages:
+    - postgresql-9.6-postgis-2.3
 
 python:
   - "3.6"
