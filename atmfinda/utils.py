@@ -24,6 +24,7 @@ def transform_google_results(google_results):
             data = {
                 'name': atm['name'], 'address': atm['vicinity'],
                 'photo_reference': photo_reference,
+                'place_id': atm['place_id'],
                 'location': {
                     'latitude': atm['geometry']['location']['lat'],
                     'longitude': atm['geometry']['location']['lat']
@@ -77,6 +78,7 @@ def deserialize_atms(atms):
         data = {
             'name': atm.name, 'address': atm.address,
             'photo': atm.photo, 'photo_reference': atm.photo_reference,
+            'place_id': atm.place_id,
             'location': {
                 'latitude': location.y, 'longitude': location.x
             },

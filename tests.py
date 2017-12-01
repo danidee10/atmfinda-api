@@ -178,7 +178,7 @@ class ATMTestCase(unittest.TestCase):
     def test_transform_google_results(self):
         """Test if the function returns the format we expect."""
         # result = transform_google_results(results)
-    
+  
     def test_create_atms(self):
         """Test if ATMS were succesfully created."""
         with app.app_context():
@@ -189,11 +189,11 @@ class ATMTestCase(unittest.TestCase):
         """Test Deserialization of atms."""
         atm1 = ATM(
             name='ATM1', address='address1', photo_reference='reference1',
-            location='POINT(3 3.5)', status=True
+            place_id='place_id1', location='POINT(3 3.5)', status=True
         )
         atm2 = ATM(
             name='ATM2', address='address2', photo_reference='reference2',
-            location='POINT(4 4.5)', status=True
+            place_id='place_id2', location='POINT(4 4.5)', status=True
         )
 
         atms = (atm1, atm2)
@@ -210,6 +210,7 @@ class ATMTestCase(unittest.TestCase):
             {
                 'name': 'ATM1', 'address': 'address1',
                 'photo': '', 'photo_reference': 'reference1',
+                'place_id': 'place_id1',
                 'location': {
                     'latitude': 3.5, 'longitude': 3
                 },
@@ -218,6 +219,7 @@ class ATMTestCase(unittest.TestCase):
             {
                 'name': 'ATM2', 'address': 'address2',
                 'photo': '', 'photo_reference': 'reference2',
+                'place_id': 'place_id2',
                 'location': {
                     'latitude': 4.5, 'longitude': 4
                 },

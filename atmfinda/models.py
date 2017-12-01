@@ -23,6 +23,7 @@ class ATM(Base):
     """ATM model to store the details of the ATM and the active status."""
 
     name = db.Column(db.String, nullable=False)
+    place_id = db.Column(db.String, default='')
     address = db.Column(db.String)
     photo_reference = db.Column(db.String, default='')
     photo = db.Column(db.String, default='')
