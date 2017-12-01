@@ -4,8 +4,10 @@
 import unittest
 import importlib
 from os import environ
+from json import dumps, loads
 
 from sqlalchemy import create_engine
+from itsdangerous import URLSafeSerializer
 from sqlalchemy_utils import database_exists, create_database, drop_database
 
 from atmfinda.app import app, initdb
@@ -183,11 +185,11 @@ class ATMTestCase(unittest.TestCase):
         
     def setUp(self):
         """Setup run before each test fixture."""
-        self.c = app.test_client()  # Use a fresh client for each test
+        self.client = app.test_client()  # Use a fresh client for each test
 
     def test_search(self):
         pass
-        # self.c.get('/find-atms-by-coords/5.544230,5.760269')
+        # self.client.get('/find-atms-by-coords/5.544230,5.760269')
 
     def test_transform_google_results(self):
         """Test if the function returns the format we expect."""
@@ -203,11 +205,11 @@ class ATMTestCase(unittest.TestCase):
         """Test Deserialization of atms."""
         atm1 = ATM(
             name='ATM1', address='address1', photo_reference='reference1',
-            place_id='place_id1', location='POINT(3 3.5)', status=True
+            place_id='place_id1', location='POINT(3.0 3.5)', status=True
         )
         atm2 = ATM(
             name='ATM2', address='address2', photo_reference='reference2',
-            place_id='place_id2', location='POINT(4 4.5)', status=True
+            place_id='place_id2', location='POINT(4.0 4.5)', status=True
         )
 
         atms = (atm1, atm2)
@@ -222,24 +224,97 @@ class ATMTestCase(unittest.TestCase):
 
         self.assertEqual(deserialized_atms, [
             {
-                'name': 'ATM1', 'address': 'address1',
+                'id': atm1.id, 'name': 'ATM1', 'address': 'address1',
                 'photo': '', 'photo_reference': 'reference1',
                 'place_id': 'place_id1',
                 'location': {
-                    'latitude': 3.5, 'longitude': 3
+                    'latitude': 3.5, 'longitude': 3.0
                 },
                 'status': True
             },
             {
-                'name': 'ATM2', 'address': 'address2',
+                'id': atm2.id, 'name': 'ATM2', 'address': 'address2',
                 'photo': '', 'photo_reference': 'reference2',
                 'place_id': 'place_id2',
                 'location': {
-                    'latitude': 4.5, 'longitude': 4
+                    'latitude': 4.5, 'longitude': 4.0
                 },
                 'status': True
             }
         ])
+
+    def create_new_user(self, data):
+        """Helper function to create new user."""
+        response = self.client.post(
+            '/users/new', data=data, content_type='application/json'
+        )
+
+        return response
+
+    def test_create_new_user(self):
+        """Tests the creation of a new user."""
+        data = dumps({
+            'first_name': 'John', 'last_name': 'Doe',
+            'email': 'johndoe@gmail.com', 'password': 'password.'
+        })
+        response = self.create_new_user(data)
+
+        self.assertEqual(
+            loads(response.data), {'message': 'User Created Succesfully'}
+        )
+
+    def test_user_signin(self):
+        """Tests if a user can signin and get a auth token."""
+        data = dumps({
+            'first_name': 'abc', 'last_name': 'def',
+            'email': 'abc@gmail.com', 'password': 'password.'
+        })
+        self.create_new_user(data)
+
+        response = self.client.post(
+            '/users/signin',
+            data=dumps({'email': 'abc@gmail.com', 'password': 'password.'}),
+            content_type='application/json'
+        )
+
+        # Generate token and compare with the one returned by the API.
+        s = URLSafeSerializer(CONFIG.SECRET_KEY)
+        token = s.dumps('abc@gmail.com')
+
+        self.assertEqual(
+            loads(response.data),
+            {'message': 'User Authenticated Succesfully', 'token': token}
+        )
+
+    def test_user_signin_wrong_credentials(self):
+        """Test sigin with wrong credentials"""
+        data = dumps({
+            'first_name': 'John', 'last_name': 'Doe',
+            'email': 'abd@gmail.com', 'password': 'password.'
+        })
+        self.create_new_user(data)
+
+        response = self.client.post(
+            '/users/signin',
+            data=dumps({'email': 'abd@gmail.com', 'password': 'passerby.'}),
+            content_type='application/json'
+        )
+
+        self.assertEqual(
+            loads(response.data), {'message': 'Invalid Login Credentials'}
+        )
+
+    def test_user_signin_non_existent_user(self):
+        """Test sigin with non existent user"""
+        response = self.client.post(
+            '/users/signin',
+            data=dumps({'email': 'null@gmail.com', 'password': 'password.'}),
+            content_type='application/json'
+        )
+
+        self.assertEqual(
+            loads(response.data), {'message': 'Invalid Login Credentials'}
+        )
 
     @classmethod
     def tearDownClass(cls):

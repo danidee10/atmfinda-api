@@ -1,8 +1,17 @@
 """SQLAlchemy models."""
 
-from flask_sqlalchemy import SQLAlchemy
-from geoalchemy2 import Geography
+import importlib
+from os import environ
 
+from geoalchemy2 import Geography
+from flask_sqlalchemy import SQLAlchemy
+from itsdangerous import URLSafeSerializer
+from werkzeug.security import (
+    generate_password_hash, check_password_hash
+)
+
+CONFIG = environ.get('FLASK_CONFIG', 'atmfinda.config.local')
+CONFIG = importlib.import_module(CONFIG)
 
 db = SQLAlchemy()
 
@@ -29,3 +38,41 @@ class ATM(Base):
     photo = db.Column(db.String, default='')
     location = db.Column(Geography('POINT'), nullable=False)
     status = db.Column(db.Boolean, default=True)
+
+
+class User(Base):
+    """Model for storing User details."""
+
+    first_name = db.Column(db.String, nullable=False)
+    last_name = db.Column(db.String, nullable=False)
+    email = db.Column(db.String, nullable=False)
+    password_hash = db.Column(db.String, nullable=False)
+
+    @staticmethod
+    def generate_password_hash(password):
+        """Generate a salted password hash."""
+        return generate_password_hash(password)
+
+    @staticmethod
+    def check_password(password, password_hash):
+        """Check if the password against a hash."""
+        return check_password_hash(password_hash, password)
+
+    @staticmethod
+    def generate_token(data):
+        """Generate a token after a user has been authenticated succesfully."""
+        s = URLSafeSerializer(CONFIG.SECRET_KEY)
+
+        return s.dumps(data)
+
+    @classmethod
+    def authenticate(cls, email, password):
+        """Authenticates a user using their email and password."""
+        user = db.session.query(cls).filter_by(email=email).first()
+
+        password_hash = getattr(user, 'password_hash', None)
+        
+        if user and cls.check_password(password, password_hash):
+            return True
+
+        return False
