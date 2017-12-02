@@ -6,7 +6,7 @@ from os import environ
 import click
 import requests
 
-from flask import Flask, Response, request, jsonify, abort
+from flask import Flask, request, jsonify, abort, make_response
 
 from sqlalchemy import cast, func
 from flask_migrate import Migrate
@@ -51,11 +51,9 @@ def create_new_user():
     user = db.session.query(User).filter_by(email=data['email']).first()
 
     if user:
-        return abort(
-            403, Response(
-                {'message': 'A user with this email already exists'}
-            )
-        )
+        abort(make_response(jsonify(
+                {'message': 'A User with this email already exists'}
+            ), 403))
 
     # Generate the hash and save it to the data dict
     password_hash = User.generate_password_hash(data['password'])

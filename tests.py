@@ -263,6 +263,21 @@ class ATMTestCase(unittest.TestCase):
             loads(response.data), {'message': 'User Created Succesfully'}
         )
 
+    def test_create_new_user_existing(self):
+        """Test registration when a user with an email exists"""
+        data = dumps({
+            'first_name': 'Existing', 'last_name': 'User',
+            'email': 'existing@gmail.com', 'password': 'password.'
+        })
+        self.create_new_user(data)
+
+        response = self.create_new_user(data)
+
+        self.assertEqual(
+            loads(response.data),
+            {'message': 'A User with this email already exists'}
+        )
+
     def test_user_signin(self):
         """Tests if a user can signin and get a auth token."""
         data = dumps({
@@ -287,7 +302,7 @@ class ATMTestCase(unittest.TestCase):
         )
 
     def test_user_signin_wrong_credentials(self):
-        """Test sigin with wrong credentials"""
+        """Test signin with wrong credentials"""
         data = dumps({
             'first_name': 'John', 'last_name': 'Doe',
             'email': 'abd@gmail.com', 'password': 'password.'
@@ -305,7 +320,7 @@ class ATMTestCase(unittest.TestCase):
         )
 
     def test_user_signin_non_existent_user(self):
-        """Test sigin with non existent user"""
+        """Test signin with non existent user"""
         response = self.client.post(
             '/users/signin',
             data=dumps({'email': 'null@gmail.com', 'password': 'password.'}),
