@@ -15,7 +15,7 @@ from .admin import admin
 from .models import db, ATM, User
 from .utils import (
     fetch_atms_from_google, transform_google_results, create_atms,
-    deserialize_atms
+    deserialize_atm, deserialize_atms, validate_token
 )
 
 
@@ -101,7 +101,34 @@ def fetch_atms_by_coords(coords):
         atms = fetch_atms_from_google(latitude, longitude)
         atms = transform_google_results(atms)
 
-        # Should be done in the background, so we respond as fast as possible
-        create_atms(atms)
+        atms = create_atms(atms)
+        atms = deserialize_atms(atms)
     
     return jsonify(atms)
+
+
+@app.route('/atms/<int:atm_id>', methods=['PATCH', 'GET'])
+def update_atm_info(atm_id):
+    """Update information about the ATM (Most likely status)."""
+    atm = db.session.query(ATM).get(atm_id)
+
+    if not atm:
+        abort(make_response(jsonify({'message': 'ATM not found'}), 404))
+
+    if request.method == 'PATCH':
+        data = request.get_json()
+        email = validate_token(data['token'])
+
+        if not email:
+            abort(make_response(jsonify({'message': 'Invalid token'}), 403))
+
+        user = db.session.query(User).filter_by(email=email)
+
+        # TODO Store the User that Updated the ATM
+
+        atm.status = data['status']
+
+        db.session.add(atm)
+        db.session.commit()
+
+    return jsonify(deserialize_atm(atm))

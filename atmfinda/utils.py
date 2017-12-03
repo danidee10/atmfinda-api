@@ -5,6 +5,7 @@ from os import environ
 
 import requests
 from shapely import wkb
+from itsdangerous import URLSafeSerializer, BadSignature
 
 from .models import db, ATM
 
@@ -62,6 +63,11 @@ def create_atms(atms):
     db.session.add_all(atm_objs)
     db.session.commit()
 
+    # Refresh all ATM's to get their id's and return them back
+    atm_objs = list(map(db.session.refresh, atm_objs))
+
+    return atm_objs
+
 
 def fetch_atms_from_google(latitude, longitude):
     """Fetch ATM's from google."""
@@ -75,22 +81,34 @@ def fetch_atms_from_google(latitude, longitude):
     return response.json()
 
 
+def deserialize_atm(atm):
+    """Deserializes an ATM into JSON."""
+    location = wkb.loads(bytes(atm.location.data))
+
+    return {
+        'id': atm.id, 'name': atm.name, 'address': atm.address,
+        'photo': atm.photo, 'photo_reference': atm.photo_reference,
+        'place_id': atm.place_id,
+        'location': {
+            'latitude': location.y, 'longitude': location.x
+        },
+        'status': atm.status
+    }
+
+
 def deserialize_atms(atms):
     """Takes a list of ATM objects and deserializes them to our format."""
-    results = []
 
-    for atm in atms:
-        location = wkb.loads(bytes(atm.location.data))
+    return list(map(deserialize_atm, atms))
 
-        data = {
-            'id': atm.id, 'name': atm.name, 'address': atm.address,
-            'photo': atm.photo, 'photo_reference': atm.photo_reference,
-            'place_id': atm.place_id,
-            'location': {
-                'latitude': location.y, 'longitude': location.x
-            },
-            'status': atm.status
-        }
-        results.append(data)
 
-    return results
+def validate_token(token):
+    """Checks if a token is valid by trying to deserialize it."""
+    try:
+        s = URLSafeSerializer(CONFIG.SECRET_KEY)
+        data = s.loads(token)
+
+        return data
+    except BadSignature:
+
+        return False

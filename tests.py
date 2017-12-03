@@ -13,7 +13,8 @@ from sqlalchemy_utils import database_exists, create_database, drop_database
 from atmfinda.app import app, initdb
 from atmfinda.models import db, ATM
 from atmfinda.utils import (
-    transform_google_results, create_atms, deserialize_atms
+    transform_google_results, create_atms, deserialize_atms, deserialize_atm,
+    validate_token
 )
 
 CONFIG = environ.get('FLASK_CONFIG', 'atmfinda.config.local_test')
@@ -200,6 +201,30 @@ class ATMTestCase(unittest.TestCase):
         with app.app_context():
             atms = transform_google_results(results)
             create_atms(atms)
+
+    def test_deserialize_atm(self):
+        """Test deserialization of a single ATM."""
+        atm = ATM(
+            name='ATM', address='address1', photo_reference='ref',
+            place_id='xy23lkds', location='POINT(3.01 3.5)', status=True
+        )
+
+        with app.app_context():
+            db.session.add(atm)
+            db.session.commit()
+            db.session.refresh(atm)
+
+        deserialized_atm = deserialize_atm(atm)
+
+        self.assertEqual(deserialized_atm, {
+            'id': atm.id, 'name': 'ATM', 'address': 'address1',
+            'photo': '', 'photo_reference': 'ref',
+            'place_id': 'xy23lkds',
+            'location': {
+                'latitude': 3.5, 'longitude': 3.01
+            },
+            'status': True
+        })
     
     def test_deserialize_atms(self):
         """Test Deserialization of atms."""
@@ -330,6 +355,68 @@ class ATMTestCase(unittest.TestCase):
         self.assertEqual(
             loads(response.data), {'message': 'Invalid Login Credentials'}
         )
+
+    def test_validate_token(self):
+        """Test if we can validate a token and get the data succesfully."""
+        # Generate token and compare with the one returned by the API.
+        s = URLSafeSerializer(CONFIG.SECRET_KEY)
+        token = s.dumps('abc@gmail.com')
+
+        data = validate_token(token)
+
+        self.assertEqual(data, 'abc@gmail.com')
+
+    def test_deserialize_token_failure(self):
+        """test if the validate token method returns False for a bad token."""
+        s = URLSafeSerializer('Fake key')
+        token = s.dumps('abc@gmail.com')
+
+        data = validate_token(token)
+
+        self.assertEqual(data, False)
+
+    def test_update_atm_status(self):
+        """Test if a user can update an ATM status."""
+        data = dumps({
+            'first_name': 'Flask', 'last_name': 'Django',
+            'email': 'flask@django.com', 'password': 'password.'
+        })
+        self.create_new_user(data)
+
+        # Login as the user and grab a token
+        login_response = self.client.post(
+            '/users/signin',
+            data=dumps({'email': 'flask@django.com', 'password': 'password.'}),
+            content_type='application/json'
+        )
+        token = loads(login_response.data)['token']
+
+        # Create ATM object
+        atm = ATM(
+            name='ATM', address='address1', photo_reference='reference',
+            place_id='place_id', location='POINT(5.2 3.5)', status=True
+        )
+
+        with app.app_context():
+            db.session.add(atm)
+            db.session.commit()
+            db.session.refresh(atm)
+
+            # Update the ATM status to False
+            self.client.patch(
+                '/atms/{}'.format(atm.id), content_type='application/json',
+                data=dumps({'status': False, 'token': token})
+            )
+            db.session.refresh(atm)
+
+            self.assertEqual(atm.status, False)
+
+    def test_update_nonexistent_atm(self):
+        """Test the error returned when trying to get a nonexistent ATM."""
+        response = self.client.get('/atms/{}'.format(65))
+
+        self.assertEqual(loads(response.data), {'message': 'ATM not found'})
+
 
     @classmethod
     def tearDownClass(cls):
