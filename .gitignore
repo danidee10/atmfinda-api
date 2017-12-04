@@ -3,3 +3,4 @@ __pycache__
 .coverage
 .vscode
 atmfinda/config/local.py
+coverage.xml
