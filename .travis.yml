@@ -23,7 +23,9 @@ before_script:
 install: "pip install -r requirements.txt"
 
 # command to run tests
-script: coverage run tests.py
+script: 
+  - coverage run tests.py
+  - coverage xml
 
 after_script:
   - ./cc-test-reporter after-build --exit-code $TRAVIS_TEST_RESULT -t coverage.py
