@@ -31,6 +31,8 @@ class Base(db.Model):
 class ATM(Base):
     """ATM model to store the details of the ATM and the active status."""
 
+    __tablename__ = 'atm'
+
     name = db.Column(db.String, nullable=False)
     place_id = db.Column(db.String, default='')
     address = db.Column(db.String)
@@ -76,3 +78,13 @@ class User(Base):
             return True
 
         return False
+
+
+class ATMUpdateLog(Base):
+    """Model for storing details about an ATM Update by a user."""
+
+    atm_id = db.Column(db.Integer, db.ForeignKey('atm.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'),  nullable=False)
+
+    atm = db.relationship('ATM', backref=db.backref('update_logs', lazy=True))
+    user = db.relationship('User', backref=db.backref('users', lazy=True))

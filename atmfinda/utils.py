@@ -63,9 +63,6 @@ def create_atms(atms):
     db.session.add_all(atm_objs)
     db.session.commit()
 
-    # Refresh all ATM's to get their id's and return them back
-    atm_objs = list(map(db.session.refresh, atm_objs))
-
     return atm_objs
 
 

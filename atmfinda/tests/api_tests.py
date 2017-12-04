@@ -7,7 +7,7 @@ from json import dumps, loads
 
 from itsdangerous import URLSafeSerializer
 
-from atmfinda.models import db, ATM
+from atmfinda.models import db, ATM, ATMUpdateLog
 from atmfinda.utils import (
     transform_google_results, create_atms, deserialize_atms, deserialize_atm,
     validate_token
@@ -274,6 +274,11 @@ class APITestCase(unittest.TestCase):
             db.session.refresh(atm)
 
             self.assertEqual(atm.status, False)
+
+            # Check that a log was created
+            update_log = db.session.query(
+                ATMUpdateLog).order_by(ATMUpdateLog.id.desc()).first()
+            self.assertEqual(update_log.user.email, 'flask@django.com')
 
     def test_update_nonexistent_atm(self):
         """Test the error returned when trying to get a nonexistent ATM."""

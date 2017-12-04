@@ -12,7 +12,7 @@ from sqlalchemy import cast, func
 from flask_migrate import Migrate
 
 from .admin import admin
-from .models import db, ATM, User
+from .models import db, ATM, ATMUpdateLog, User
 from .utils import (
     fetch_atms_from_google, transform_google_results, create_atms,
     deserialize_atm, deserialize_atms, validate_token
@@ -122,13 +122,17 @@ def update_atm_info(atm_id):
         if not email:
             abort(make_response(jsonify({'message': 'Invalid token'}), 403))
 
-        user = db.session.query(User).filter_by(email=email)
-
-        # TODO Store the User that Updated the ATM
+        # NOTE: We can eliminate the extra db SELECT query by passing in the id
+        # Since we can already validate the existence of the user
+        # when we deserialize the token
+        user = db.session.query(User).filter_by(email=email).first()
+        update_log = ATMUpdateLog(atm=atm, user=user)
 
         atm.status = data['status']
 
         db.session.add(atm)
+        db.session.add(update_log)
+
         db.session.commit()
 
     return jsonify(deserialize_atm(atm))
