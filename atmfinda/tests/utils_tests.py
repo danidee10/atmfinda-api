@@ -173,7 +173,8 @@ class UtilsTestCase(unittest.TestCase):
             'location': {
                 'latitude': 3.5, 'longitude': 3.01
             },
-            'status': True
+            'status': True,
+            'date_modified': atm.date_modified
         })
     
     def test_deserialize_atms(self):
@@ -205,7 +206,8 @@ class UtilsTestCase(unittest.TestCase):
                 'location': {
                     'latitude': 3.5, 'longitude': 3.0
                 },
-                'status': True
+                'status': True,
+                'date_modified': atm1.date_modified
             },
             {
                 'id': atm2.id, 'name': 'ATM2', 'address': 'address2',
@@ -214,7 +216,8 @@ class UtilsTestCase(unittest.TestCase):
                 'location': {
                     'latitude': 4.5, 'longitude': 4.0
                 },
-                'status': True
+                'status': True,
+                'date_modified': atm2.date_modified
             }
         ])
 

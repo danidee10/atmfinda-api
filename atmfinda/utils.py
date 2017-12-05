@@ -89,7 +89,8 @@ def deserialize_atm(atm):
         'location': {
             'latitude': location.y, 'longitude': location.x
         },
-        'status': atm.status
+        'status': atm.status,
+        'date_modified': atm.date_modified
     }
 
 
