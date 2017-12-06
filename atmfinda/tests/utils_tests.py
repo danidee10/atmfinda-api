@@ -13,6 +13,7 @@ from atmfinda.utils import (
     validate_token
 )
 
+
 CONFIG = environ.get('FLASK_CONFIG', 'atmfinda.config.local_test')
 CONFIG = importlib.import_module(CONFIG)
 
