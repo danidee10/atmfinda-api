@@ -20,7 +20,7 @@ def create_drop_database():
 
     if database_exists(engine.url) and CONFIG.DROP_EXISTING_DATABASE:
         print('Preparing to drop existing database...')
-        drop_database(engine.url)
+        destroy_database()
 
     print('Creating Database...')
     create_database(engine.url)
@@ -65,13 +65,11 @@ def suite():
     suite = unittest.TestSuite()
     
     # Patch the TestCases with the app Object
-    api_test = api_tests.APITestCase
-    api_test.app = app
-    utils_test = utils_tests.UtilsTestCase
-    utils_test.app = app
+    api_tests.APITestCase.app = app
+    utils_tests.UtilsTestCase.app = app
 
-    suite.addTests(loader.loadTestsFromTestCase(api_test))
-    suite.addTests(loader.loadTestsFromTestCase(utils_test))
+    suite.addTests(loader.loadTestsFromTestCase(api_tests.APITestCase))
+    suite.addTests(loader.loadTestsFromTestCase(utils_tests.UtilsTestCase))
 
     return suite
 

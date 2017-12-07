@@ -41,6 +41,9 @@ class ATM(Base):
     location = db.Column(Geography('POINT'), nullable=False)
     status = db.Column(db.Boolean, default=True)
 
+    def __repr__(self):
+        return '{} {}'.format(self.name, self.address)
+
 
 class User(Base):
     """Model for storing User details."""
@@ -49,6 +52,9 @@ class User(Base):
     last_name = db.Column(db.String, nullable=False)
     email = db.Column(db.String, nullable=False)
     password_hash = db.Column(db.String, nullable=False)
+
+    def __repr__(self):
+        return '{} {}'.format(self.first_name, self.last_name)
 
     @staticmethod
     def generate_password_hash(password):
