@@ -81,9 +81,9 @@ class User(Base):
         password_hash = getattr(user, 'password_hash', None)
         
         if user and cls.check_password(password, password_hash):
-            return True
+            return True, user
 
-        return False
+        return False, False
 
 
 class ATMUpdateLog(Base):

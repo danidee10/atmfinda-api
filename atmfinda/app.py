@@ -74,14 +74,21 @@ def sign_user_in():
     data = request.get_json()
     email = data['email']
     
-    if User.authenticate(email, data['password']):
+    authenticated, user = User.authenticate(email, data['password'])
+
+    if authenticated:
         token = User.generate_token(email)
 
         return jsonify(
-            {'message': 'User Authenticated Succesfully', 'token': token}
+            {
+                'message': 'User Authenticated Succesfully', 'token': token,
+                'first_name': user.first_name, 'last_name': user.last_name,
+                'email': email
+            }
         )
 
-    return jsonify({'message': 'Invalid Login Credentials'})
+    abort(make_response(jsonify({'message': 'Invalid Login Credentials'}), 403))
+    
 
 @app.route('/find-atms-by-coords/<coords>')
 def fetch_atms_by_coords(coords):

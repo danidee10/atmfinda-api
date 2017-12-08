@@ -206,7 +206,11 @@ class APITestCase(unittest.TestCase):
 
         self.assertEqual(
             loads(response.data),
-            {'message': 'User Authenticated Succesfully', 'token': token}
+            {
+               'email': 'abc@gmail.com', 'first_name': 'abc', 
+               'last_name': 'def', 'message': 'User Authenticated Succesfully',
+               'token': token
+            }
         )
 
     def test_user_signin_wrong_credentials(self):
