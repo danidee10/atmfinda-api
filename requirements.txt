@@ -28,7 +28,7 @@ Shapely==1.6.2.post1
 six==1.11.0
 SQLAlchemy==1.1.15
 SQLAlchemy-Utils==0.32.21
-urllib3==1.22
+urllib3==1.26.5
 Werkzeug==0.12.2
 wrapt==1.10.11
 WTForms==2.1
